@@ -1,14 +1,11 @@
+# Minimal Debian image
 FROM debian:bookworm-slim
 
-# Force APT to use IPv4 only (prevents infinite hangs)
+# Force APT to use IPv4 (prevents hanging on some VPS)
 RUN echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
 
-# Use faster and more reliable Debian mirrors
-RUN sed -i 's|deb.debian.org|deb.debian.org|g' /etc/apt/sources.list \
-    && sed -i 's|security.debian.org|deb.debian.org|g' /etc/apt/sources.list
-
 # Install only required runtime libraries for AzerothCore
-RUN apt update && apt install -y --no-install-recommends \
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
         libssl3 \
         libboost-system1.74.0 \
         libboost-program-options1.74.0 \
@@ -18,14 +15,14 @@ RUN apt update && apt install -y --no-install-recommends \
         libreadline8 \
         ca-certificates \
         tzdata \
-    && apt clean \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /home/container
 
-# Pterodactyl requires this environment variable
+# Pterodactyl requires USER and HOME environment variables
 ENV USER=container HOME=/home/container
 
-# Entry point — Pterodactyl replaces this
+# Default command (Pterodactyl overrides this)
 CMD ["/bin/bash"]
